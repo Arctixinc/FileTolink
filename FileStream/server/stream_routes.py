@@ -17,19 +17,27 @@ routes = web.RouteTableDef()
 async def root_route_handler(_):
     return web.json_response(
         {
-            "server_status": "running",
-            "uptime": utils.get_readable_time(time.time() - StartTime),
-            "telegram_bot": "@" + FileStream.username,
-            "connected_bots": len(multi_clients),
-            "loads": dict(
-                ("bot" + str(c + 1), l)
+            "status": "Server is operational",
+            "uptime": f"Uptime: {utils.get_readable_time(time.time() - StartTime)}",
+            "bot_info": {
+                "bot_username": f"@{FileStream.username}",
+                "connected_bots_count": len(multi_clients),
+                "version": __version__
+            },
+            "load_distribution": {
+                f"Bot {c + 1}": l
                 for c, (_, l) in enumerate(
                     sorted(work_loads.items(), key=lambda x: x[1], reverse=True)
                 )
-            ),
-            "version": __version__,
+            },
+            "loads_summary": {
+                "average_load": sum(work_loads.values()) / len(work_loads) if work_loads else 0,
+                "max_load": max(work_loads.values(), default=0),
+                "min_load": min(work_loads.values(), default=0)
+            }
         }
     )
+
 
 @routes.get("/watch/{path}", allow_head=True)
 async def stream_handler(request: web.Request):
