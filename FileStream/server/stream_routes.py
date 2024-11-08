@@ -21,7 +21,7 @@ async def root_route_handler(_):
             "uptime": f"Uptime: {utils.get_readable_time(time.time() - StartTime)}",
             "bot_info": {
                 "bot_username": f"@{FileStream.username}",
-                "connected_bots_count": len(multi_clients),
+                "connected_bots": len(multi_clients),
                 "version": __version__
             },
             "load_distribution": {
