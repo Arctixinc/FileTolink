@@ -160,7 +160,6 @@ async def shellrunner(_, message):
                     shell,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    shell=True
                 )
             except Exception as err:
                 await edit_or_reply(message, text=f"<b>ERROR :</b>\n<pre>{err}</pre>")
@@ -176,7 +175,6 @@ async def shellrunner(_, message):
                 shell,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                shell=True
             )
         except Exception as err:
             print(err)
