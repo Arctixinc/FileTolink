@@ -189,7 +189,7 @@ async def link_command_handler(bot: Client, message: Message):
 
 
 
-@FileStream.on_message(filters.command(["link"]) & filters.private & filters.user(Telegram.ADMINS))
+@FileStream.on_message(filters.command(["link"]) & filters.private & filters.user(Telegram.OWNER_ID))
 async def channel_task(client, message: Message):
     try:
         # Step 1: Get the first message
