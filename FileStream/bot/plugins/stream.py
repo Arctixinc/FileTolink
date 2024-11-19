@@ -186,3 +186,106 @@ async def link_command_handler(bot: Client, message: Message):
             f"An error occurred in /link command:\n"
             f"Eʀʀᴏʀ: **{e}**"
         )
+
+
+
+@FileStream.on_message(command("fromchannel") & filters.private & filters.user(Telegram.ADMINS))
+async def channel_task(client, message: Message):
+    try:
+        # Step 1: Get the first message
+        while True:
+            try:
+                first_message = await client.ask(
+                    text="<b>Forward the First Message from the Channel</b>",
+                    chat_id=message.from_user.id,
+                    filters=(filters.forwarded | (filters.text & ~filters.forwarded)),
+                    timeout=60,
+                )
+            except asyncio.TimeoutError:
+                await message.reply("❌ Timeout! Please start over and forward the first message.", quote=True)
+                return
+
+            first_message_id = await get_message_id(first_message)
+            if first_message_id:
+                break
+            else:
+                await first_message.reply(
+                    "<b>❌ Error\n\nThis forwarded post is not valid. Please forward a valid message from the channel.</b>",
+                    quote=True,
+                )
+
+        # Step 2: Get the second message
+        while True:
+            try:
+                second_message = await client.ask(
+                    text="<b>Forward the Second Message from the Channel</b>",
+                    chat_id=message.from_user.id,
+                    filters=(filters.forwarded | (filters.text & ~filters.forwarded)),
+                    timeout=60,
+                )
+            except asyncio.TimeoutError:
+                await message.reply("❌ Timeout! Please start over and forward the second message.", quote=True)
+                return
+
+            second_message_id = await get_message_id(second_message)
+            if second_message_id:
+                break
+            else:
+                await second_message.reply(
+                    "<b>❌ Error\n\nThis forwarded post is not valid. Please forward a valid message from the channel.</b>",
+                    quote=True,
+                )
+
+        # Ensure the message IDs are in the correct order
+        if first_message_id > second_message_id:
+            first_message_id, second_message_id = second_message_id, first_message_id
+
+        # Step 3: Process the range of messages
+        for msg_id in range(first_message_id, second_message_id + 1):
+            msg = await client.get_messages(chat_id=first_message.forward_from_chat.id, message_ids=msg_id)
+
+            # Skip if the message does not contain media
+            if not msg.media:
+                continue
+
+            try:
+                # Add the file to the database
+                inserted_id = await db.add_file(get_file_info(msg))
+                print(f"File added with ID: {inserted_id}")
+
+                # Generate file IDs and the link
+                await get_file_ids(False, inserted_id, multi_clients, msg)
+                reply_markup, stream_text = await gen_link(_id=inserted_id)
+
+                # Send the generated link to the user
+                await message.reply_text(
+                    text=stream_text,
+                    disable_web_page_preview=True,
+                    reply_markup=reply_markup
+                )
+            except Exception as e:
+                print(f"Error processing message ID {msg_id}: {e}")
+                await message.reply_text(
+                    text=f"<b>❌ Error while processing message ID {msg_id}.</b>",
+                    quote=True
+                )
+                continue
+
+        await message.reply_text("<b>✅ All valid messages have been processed successfully!</b>", quote=True)
+
+    except Exception as e:
+        print(f"Error in fromchannel command: {e}")
+        await message.reply_text(
+            text=f"<b>❌ An error occurred: {e}</b>",
+            quote=True
+        )
+
+
+async def get_message_id(forwarded_message: Message) -> int:
+    """
+    Extract the original message ID from a forwarded message.
+    """
+    if forwarded_message.forward_from_chat and forwarded_message.forward_from_message_id:
+        return forwarded_message.forward_from_message_id
+    return None
+    
