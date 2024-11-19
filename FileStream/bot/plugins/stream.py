@@ -81,6 +81,7 @@ async def private_receive_handler(bot: Client, message: Message):
         | filters.voice
         | filters.photo
     )
+    & ~filters.chat(-1001825550753)
 )
 async def channel_receive_handler(bot: Client, message: Message):
     if await is_channel_banned(bot, message):
