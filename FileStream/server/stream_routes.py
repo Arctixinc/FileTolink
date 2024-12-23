@@ -14,7 +14,7 @@ from FileStream.utils.render_template import render_page
 routes = web.RouteTableDef()
 
 @routes.get("/status", allow_head=True)
-async def root_route_handler(_):
+async def status_route_handler(_):
     return web.json_response(
         {
             "status": "Server is operational",
