@@ -38,6 +38,9 @@ async def root_route_handler(_):
         }
     )
 
+@routes.get("/", allow_head=True)
+async def root_route_handler(_):
+    return await status_route_handler(_)
 
 @routes.get("/watch/{path}", allow_head=True)
 async def stream_handler(request: web.Request):
